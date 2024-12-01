@@ -12,7 +12,7 @@ on:
       - develop
     
 permissions:
-  contents: read 
+  contents: write
   checks: write 
   issues: write 
   pull-requests: write 
@@ -62,6 +62,26 @@ jobs:
         if: steps.check_tests.outputs.has_tests == 'true'
         run: |
           pytest --junitxml=test-results/results.xml || true
+
+      - name: Pytest coverage comment
+        if: ${{ github.ref == 'refs/heads/main' }}
+        id: coverageComment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          hide-comment: true
+          pytest-coverage-path: ./data/pytest-coverage_4.txt
+
+      - name: Update Readme with Coverage Html
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n\${{ steps.coverageComment.outputs.coverageHtml }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
+
+      - name: Commit & Push changes to Readme
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions-js/push@master
+        with:
+          message: Update coverage on Readme
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
         # 8. 테스트 결과를 PR 코멘트로 게시 (테스트가 있는 경우에만)
       - name: Publish test results as PR comment
