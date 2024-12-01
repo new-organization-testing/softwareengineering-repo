@@ -58,20 +58,17 @@ jobs:
           if [ -n "$(find . -name 'test_*.py')" ]; then echo "has_tests=true" >> $GITHUB_OUTPUT; else echo "has_tests=false" >> $GITHUB_OUTPUT; fi
 
         # 7. 테스트 실행 (테스트가 있는 경우에만)
-      - name: Test with pytest
+      - name: Test with pytest and coverage
         if: steps.check_tests.outputs.has_tests == 'true'
         run: |
-          pytest --junitxml=test-results/results.xml || true
-
-      - name: Build coverage file
-        run: |
-          pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=app tests/ | tee pytest-coverage.txt
-
-      - name: Pytest coverage comment
-        uses: MishaKav/pytest-coverage-comment@main
+          pytest --cov=. --cov-report=xml:coverage.xml tests/
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
         with:
-          pytest-coverage-path: ./pytest-coverage.txt
-          junitxml-path: ./pytest.xml
+          file: ./coverage.xml
+          fail_ci_if_error: true
+
 
         # 8. 테스트 결과를 PR 코멘트로 게시 (테스트가 있는 경우에만)
       - name: Publish test results as PR comment
