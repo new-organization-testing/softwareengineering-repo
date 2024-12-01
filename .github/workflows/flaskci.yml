@@ -37,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest openai PyGithub
+          pip install flake8 pytest coverage openai PyGithub
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           
         # 4. 테스트 결과 디렉토리 생성
@@ -93,6 +93,11 @@ jobs:
               issue_number: context.issue.number,
               body: comment
             });
+
+      - name : Generate Coverage report
+        run : |
+          coverage run --source=./ -m unittest discover -p "test_*.py"
+          coverage report
 
         # 9. GPT를 활용한 코드 리뷰
       - name: Run GPT Code Review
