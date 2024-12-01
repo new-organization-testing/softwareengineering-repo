@@ -63,25 +63,15 @@ jobs:
         run: |
           pytest --junitxml=test-results/results.xml || true
 
+      - name: Build coverage file
+        run: |
+          pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=app tests/ | tee pytest-coverage.txt
+
       - name: Pytest coverage comment
-        if: ${{ github.ref == 'refs/heads/main' }}
-        id: coverageComment
         uses: MishaKav/pytest-coverage-comment@main
         with:
-          hide-comment: true
-          pytest-coverage-path: ./data/pytest-coverage_4.txt
-
-      - name: Update Readme with Coverage Html
-        if: ${{ github.ref == 'refs/heads/main' }}
-        run: |
-          sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n\${{ steps.coverageComment.outputs.coverageHtml }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
-
-      - name: Commit & Push changes to Readme
-        if: ${{ github.ref == 'refs/heads/main' }}
-        uses: actions-js/push@master
-        with:
-          message: Update coverage on Readme
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./pytest.xml
 
         # 8. 테스트 결과를 PR 코멘트로 게시 (테스트가 있는 경우에만)
       - name: Publish test results as PR comment
@@ -113,11 +103,6 @@ jobs:
               issue_number: context.issue.number,
               body: comment
             });
-
-      - name : Generate Coverage report
-        run : |
-          coverage run --source=./ -m unittest discover -p "test_*.py"
-          coverage report
 
         # 9. GPT를 활용한 코드 리뷰
       - name: Run GPT Code Review
